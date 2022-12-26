@@ -1,15 +1,15 @@
 const express = require('express')
 const app=express()
 
-const path = require('path')
+const router = require('./router.js')
+
+app.use(express.urlencoded({extended:false}))
+app.use(express.json())
 
 app.use(express.static('public'))
-app.set('views',path.join(__dirname,'views'))
+app.set('views','views')
 app.set('view engine','ejs')
 
-app.get('/', function(req,res){
-    console.log(app.get('views'))
-    res.render('home-guest')
-})
+app.use('/',router)
 
 app.listen(3000)
