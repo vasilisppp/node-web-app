@@ -15,7 +15,7 @@ let sessionOptions = session({
     }
 })
 
-const router = require('./router.js')
+
 
 app.use(express.urlencoded({extended:false}))
 app.use(express.json())
@@ -25,6 +25,14 @@ app.use(express.static('public'))
 
 app.set('views','views')
 app.set('view engine','ejs')
+
+app.use(function(req,res,next){
+    console.log(req.session)
+    res.locals.user = req.session.user
+    next()
+})
+
+const router = require('./router.js')
 
 app.use('/',router)
 
