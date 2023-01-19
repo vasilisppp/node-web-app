@@ -21,12 +21,13 @@ router.post(
   postController.create
 )
 router.get('/post/:id', postController.viewSingle)
-
+router.get('/post/:id/edit', postController.viewEditScreen)
 // Profile rouutes
 router.get(
   '/profile/:username',
   userController.ifUserExists,
   userController.profilePostsScreen
 )
+router.post('/post/:id/edit', postController.edit)
 
 module.exports = router
