@@ -31,8 +31,13 @@ router.post(
   userController.mustBeLoggedIn,
   postController.edit
 )
+router.post(
+  '/post/:id/delete',
+  userController.mustBeLoggedIn,
+  postController.delete
+)
 
-// Profile rouutes
+// Profile routes
 router.get(
   '/profile/:username',
   userController.ifUserExists,
