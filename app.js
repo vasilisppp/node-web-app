@@ -1,8 +1,10 @@
 const express = require('express')
 const session = require('express-session')
 const flash = require('connect-flash')
+const markdown = require('marked')
 const MongoStore = require('connect-mongo')
 const app = express()
+const sanitizeHTML = require('sanitize-html')
 
 let sessionOptions = session({
   secret: 'mfjdaibuufublasbdhibfbafyeqwbvsancz',
@@ -25,12 +27,33 @@ app.set('views', 'views')
 app.set('view engine', 'ejs')
 
 app.use(function (req, res, next) {
+  // make markdown function available from within ejs templates
+  res.locals.filterUserHTML = function (content) {
+    return sanitizeHTML(markdown.parse(content), {
+      allowedTags: [
+        'p',
+        'br',
+        'ul',
+        'ol',
+        'li',
+        'strong',
+        'bold',
+        'i',
+        'em',
+        'h1',
+        'h2',
+        'h3',
+        'h4',
+      ],
+      allowedAttributes: [],
+    })
+  }
   // make all error and success flash messages available
   // from all templates
   res.locals.errors = req.flash('errors')
   res.locals.success = req.flash('success')
   // make user id available on the req object
-  if (req.session.user){
+  if (req.session.user) {
     req.visitorId = req.session.user._id
   } else {
     req.visitorId = 0

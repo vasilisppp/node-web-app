@@ -1,6 +1,7 @@
 const postsCollection = require('../db').db().collection('posts')
 const ObjectId = require('mongodb').ObjectId
 const User = require('../models/User')
+const sanitizeHTML = require('sanitize-html')
 
 let Post = function (data, userid, requestedPostId) {
   this.data = data
@@ -17,8 +18,14 @@ Post.prototype.cleanUp = function () {
     this.data.body = ''
   }
   this.data = {
-    title: this.data.title.trim(),
-    body: this.data.body.trim(),
+    title: sanitizeHTML(this.data.title.trim(), {
+      allowedTags: [],
+      allowedAttributes: [],
+    }),
+    body: sanitizeHTML(this.data.body.trim(), {
+      allowedTags: [],
+      allowedAttributes: [],
+    }),
     createdDate: new Date(),
     author: ObjectId(this.userid),
   }
@@ -41,8 +48,8 @@ Post.prototype.create = function () {
       // save post in db
       postsCollection
         .insertOne(this.data)
-        .then(() => {
-          resolve()
+        .then((result) => {
+          resolve(result.insertedId)
         })
         .catch(() => {
           this.errors.push('Please try again later')
@@ -60,10 +67,11 @@ Post.findSingleById = function (id, visitorId) {
       reject()
       return
     }
-    
-    let posts = await Post.reusablePostQuery([
-      {$match:{_id: new ObjectId(id)}}
-    ],visitorId)
+
+    let posts = await Post.reusablePostQuery(
+      [{ $match: { _id: new ObjectId(id) } }],
+      visitorId
+    )
 
     if (posts.length) {
       resolve(posts[0])
@@ -89,14 +97,12 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId) {
           title: 1,
           body: 1,
           createdDate: 1,
-          authorId: "$author",
+          authorId: '$author',
           author: { $arrayElemAt: ['$authorDocument', 0] },
         },
       },
     ])
-    let posts = await postsCollection
-      .aggregate(aggOperations)
-      .toArray()
+    let posts = await postsCollection.aggregate(aggOperations).toArray()
     // Clean up author property
     posts = posts.map(function (post) {
       post.author = {
@@ -112,17 +118,17 @@ Post.reusablePostQuery = function (uniqueOperations, visitorId) {
 
 Post.findByAuthorId = function (authorId) {
   return Post.reusablePostQuery([
-    {$match:{author:ObjectId(authorId)}},
-    {$sort:{createdDate:-1}}
+    { $match: { author: ObjectId(authorId) } },
+    { $sort: { createdDate: -1 } },
   ])
 }
 
-Post.prototype.update = function(){
-  return new Promise(async (resolve,reject)=>{
+Post.prototype.update = function () {
+  return new Promise(async (resolve, reject) => {
     try {
       let post = await Post.findSingleById(this.requestedPostId, this.userid)
       console.log(post)
-      if (post.isVisitorOwner){
+      if (post.isVisitorOwner) {
         // update the db
         let status = await this.actuallyUpdate()
         resolve(status)
