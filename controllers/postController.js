@@ -15,10 +15,10 @@ exports.create = function (req, res) {
       })
     })
     .catch(function (errors) {
-      errors.forEach(e=>{
-        req.flash('errors',e)
+      errors.forEach((e) => {
+        req.flash('errors', e)
       })
-      req.session.save(()=>{
+      req.session.save(() => {
         res.redirect('/create-post')
       })
     })
@@ -33,17 +33,17 @@ exports.viewSingle = async function (req, res) {
   }
 }
 
-exports.viewEditScreen = async function(req, res) {
+exports.viewEditScreen = async function (req, res) {
   try {
     let post = await Post.findSingleById(req.params.id, req.visitorId)
     if (post.isVisitorOwner) {
-      res.render("edit-post", {post: post})
+      res.render('edit-post', { post: post })
     } else {
-      req.flash("errors", "You do not have permission to perform that action.")
-      req.session.save(() => res.redirect("/"))
+      req.flash('errors', 'You do not have permission to perform that action.')
+      req.session.save(() => res.redirect('/'))
     }
   } catch {
-    res.render("404")
+    res.render('404')
   }
 }
 
@@ -79,16 +79,28 @@ exports.edit = async function (req, res) {
   }
 }
 
-exports.delete = function(req,res) {
-  Post.delete(req.params.id, req.visitorId).then(()=>{
-    req.flash('success','Post deleted successfully')
-    req.session.save(()=>{
-      res.redirect(`/profile/${req.session.user.username}`)
+exports.delete = function (req, res) {
+  Post.delete(req.params.id, req.visitorId)
+    .then(() => {
+      req.flash('success', 'Post deleted successfully')
+      req.session.save(() => {
+        res.redirect(`/profile/${req.session.user.username}`)
+      })
     })
-  }).catch(()=>{
-    req.flash('errors','You don\'t have permission to perform this action')
-    req.session.save(()=>{
-      res.redirect('/')
+    .catch(() => {
+      req.flash('errors', "You don't have permission to perform this action")
+      req.session.save(() => {
+        res.redirect('/')
+      })
     })
-  })
+}
+
+exports.search = function (req, res) {
+  Post.search(req.body.searchTerm)
+    .then(posts => {
+      res.json(posts)
+    })
+    .catch(() => {
+      res.json([])
+    })
 }
